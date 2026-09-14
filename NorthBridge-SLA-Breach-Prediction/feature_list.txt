@@ -1,0 +1,33 @@
+PatientRef_NUM
+CategoryID
+PriorityID
+Status_x_NUM
+FirstResponseAt_NUM
+ResolvedAt_NUM
+SLABreached
+Description_NUM
+ResolutionNotes_NUM
+Breach Status_NUM
+ClientType_NUM
+AccountManagerID
+Region_NUM
+ContractStartDate_NUM
+ContractEndDate_NUM
+Contract duration (months)
+SLACreditClause
+IsActive_x
+SLA eligibility_NUM
+Client Status_NUM
+FullName_NUM
+TeamID
+Role_NUM
+Specialisms_NUM
+DailyCapacity
+IsActive_y
+Status_y_NUM
+HOUR_OF_DAY
+DAY_OF_WEEK
+IS_WEEKEND
+DAY_NAME_NUM
+MONTH
+QUARTER

@@ -1,60 +1,47 @@
 """
-Step 1 — Load & Join Data from Snowflake REPORTING Schema
+Step 1 — Load Data from EXCEL FILE
 NorthBridge Health Services — SLA Breach Prediction
 """
 
-import os
 import pandas as pd
-import snowflake.connector
-from dotenv import load_dotenv
-
-# Load credentials from .env file
-load_dotenv()
+import os
 
 print("=" * 60)
-print("STEP 1: LOADING DATA FROM SNOWFLAKE")
+print("STEP 1: LOADING DATA FROM EXCEL FILE")
 print("=" * 60)
 
-# ---- CONNECT TO SNOWFLAKE ----
-conn = snowflake.connector.connect(
-    account=os.getenv("SNOWFLAKE_ACCOUNT"),
-    user=os.getenv("SNOWFLAKE_USER"),
-    password=os.getenv("SNOWFLAKE_PASSWORD"),
-    warehouse=os.getenv("SNOWFLAKE_WAREHOUSE"),
-    database=os.getenv("SNOWFLAKE_DATABASE"),
-    schema=os.getenv("SNOWFLAKE_SCHEMA", "REPORTING")
-)
+# ---- YOUR EXCEL FILE & SHEET NAMES ----
+excel_file = "data/data.xlsx.xlsx"
 
-print("✅ Connected to Snowflake successfully!")
+# ✅ YOUR EXACT SHEET NAMES FROM YOUR FILE
+sheet_tickets = "N-Bridge xlsx - Tickets"
+sheet_clients = "N-Bridge xlsx - Clients"
+sheet_agents = "N-Bridge xlsx - Agents"
+
+# Check if file exists
+if not os.path.exists(excel_file):
+    print(f"❌ ERROR: Cannot find file: {excel_file}")
+    exit(1)
+
+print(f"✅ Found Excel file: {excel_file}")
+
+# ---- READ ALL 3 SHEETS ----
+tickets = pd.read_excel(excel_file, sheet_name=sheet_tickets)
+clients = pd.read_excel(excel_file, sheet_name=sheet_clients)
+agents = pd.read_excel(excel_file, sheet_name=sheet_agents)
+
+print(f"✅ Tickets:   {len(tickets):>6} rows")
+print(f"✅ Clients:   {len(clients):>6} rows")
+print(f"✅ Agents:    {len(agents):>6} rows")
 
 # ---- JOIN ALL 3 TABLES ----
-query = """
-SELECT
-    t.TICKETID,
-    t.PRIORITYID,
-    t.CATEGORYID,
-    t.CHANNEL,
-    t.CREATEDAT,
-    t.SLABREACHED,
-    c.CONTRACTTIER,
-    c.SLACREDITCLAUSE,
-    a.HUB,
-    a.TEAMID,
-    a.DAILYCAPACITY
-FROM TICKETS t
-LEFT JOIN CLIENTS c ON t.CLIENTID = c.CLIENTID
-LEFT JOIN AGENTS a ON t.ASSIGNEDAGENTID = a.AGENTID
-WHERE t.SLABREACHED IS NOT NULL
-"""
+tickets = tickets.merge(clients, on="ClientID", how="left")
+tickets = tickets.merge(agents, left_on="AssignedAgentID", right_on="AgentID", how="left")
 
-print("📥 Fetching joined data...")
-df = pd.read_sql(query, conn)
-conn.close()
+print(f"\n✅ Joined dataset: {len(tickets)} rows")
+print(f"✅ Total columns: {len(tickets.columns)}")
 
-# ---- SAVE LOCALLY ----
-df.to_csv("joined_data.csv", index=False)
-
-print(f"✅ Loaded {len(df)} rows")
-print(f"✅ Columns: {list(df.columns)}")
-print(f"✅ Breach rate: {df['SLABREACHED'].mean():.1%}")
+# ---- SAVE FOR STEP 2 ----
+tickets.to_csv("joined_data.csv", index=False)
 print("\n✅ STEP 1 COMPLETE → saved as joined_data.csv")
+print("✅ NOW RUN: python step2_feature_engineering.py")
